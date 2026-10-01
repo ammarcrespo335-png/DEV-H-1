@@ -5,12 +5,12 @@
    Edit these to change prices, copy, or where the form goes.
 ========================================================= */
 
-// Paste your Google Apps Script Web App URL here (see apps-script/SETUP.md).
+// Google Apps Script Web App URL (see apps-script/SETUP.md).
 // While empty, the form only simulates sending (good for demos).
-const FORM_ENDPOINT = '';
+const FORM_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwQBdm7JGjjcPKc-jyKuRwEH1gqF6ApMmvjBtqN5iSHT_VJQKg3s9xzv9Y0UVwR5shDCQ/exec';
 
 // Must match SECRET in Code.gs. Blocks random posts to your sheet.
-const FORM_SECRET = 'change-me';
+const FORM_SECRET = 'DEV-H012**';
 
 const BUNDLE_MIN = 3;        // services needed for a bundle discount
 const BUNDLE_DISCOUNT = 0.10; // 10% off
@@ -593,12 +593,17 @@ function validate(input) {
     let m = '';
     if (input.id === 'f-name' && v.length < 2) m = 'Enter your name.';
     if (input.id === 'f-email' && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)) m = 'Enter a valid email, like you@example.com.';
+    if (input.id === 'f-phone') {
+        const digits = v.replace(/\D/g, '');
+        if (!v) m = 'Enter your phone number.';
+        else if (!/^\+?[0-9\s\-()]+$/.test(v) || digits.length < 7 || digits.length > 15) m = 'Enter a valid phone number, like +20 100 000 0000.';
+    }
     if (input.id === 'f-msg' && v.length < 10) m = 'Tell us a little more about your project (at least 10 characters).';
     setError(input, m);
     return !m;
 }
 
-['f-name', 'f-email', 'f-msg'].forEach(id => {
+['f-name', 'f-email', 'f-phone', 'f-msg'].forEach(id => {
     const el = $(id);
     el.addEventListener('blur', () => validate(el));
     el.addEventListener('input', () => { if (el.classList.contains('invalid')) validate(el); });
@@ -612,7 +617,7 @@ form.onsubmit = async e => {
     e.preventDefault();
     $('ok').hidden = true;
 
-    const fields = ['f-name', 'f-email', 'f-msg'].map($);
+    const fields = ['f-name', 'f-email', 'f-phone', 'f-msg'].map($);
     const results = fields.map(validate);
     if (results.includes(false)) {
         fields[results.indexOf(false)].focus();
@@ -633,6 +638,7 @@ form.onsubmit = async e => {
                 secret: FORM_SECRET,
                 name: data.name.trim(),
                 email: data.email.trim(),
+                phone: data.phone.trim(),
                 service: data.service || '',
                 plan: data.plan || '',
                 message: data.msg.trim(),
